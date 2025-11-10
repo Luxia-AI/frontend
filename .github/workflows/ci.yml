@@ -10,3 +10,4 @@ jobs:
           node-version: 24
       - run: npm install --legacy-peer-deps
       - run: npm run lint || echo "No linter yet"
+      - run: echo "✅ Frontend repo initialized"
