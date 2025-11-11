@@ -1,9 +1,12 @@
 {
-  "cSpell.words": ["extralight", "heroui", "herouiprovider", "luxia"],
+  "cSpell.words": ["extralight", "heroui", "herouiprovider", "luxia", "oklch"],
   "tailwindCSS.experimental.classRegex": [
     ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
   ],
   "tailwindCSS.lint.cssConflict": "warning",
   "tailwindCSS.lint.invalidApply": "error",
-  "tailwindCSS.lint.invalidScreen": "error"
+  "tailwindCSS.lint.invalidScreen": "error",
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
 }
