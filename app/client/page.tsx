@@ -133,32 +133,70 @@ function formatPercent(value: unknown): string {
 	return `${Math.round(normalized * 10) / 10}%`;
 }
 
+function normalizeSubclaimStatus(
+	statusRaw: unknown
+): "valid" | "invalid" | "partial" | "unknown" {
+	const status = String(statusRaw || "")
+		.trim()
+		.toUpperCase()
+		.replace(/\s+/g, "_");
+	if (
+		!status ||
+		status === "UNKNOWN" ||
+		status === "UNVERIFIABLE" ||
+		status === "NEUTRAL"
+	) {
+		return "unknown";
+	}
+	if (
+		status === "INVALID" ||
+		status === "PARTIALLY_INVALID" ||
+		status === "REFUTED" ||
+		status === "REFUTES" ||
+		status === "CONTRADICTS" ||
+		status === "FALSE"
+	) {
+		return "invalid";
+	}
+	if (
+		status === "PARTIALLY_VALID" ||
+		status === "MIXED" ||
+		status === "PARTIAL" ||
+		status === "PARTIALLY_TRUE"
+	) {
+		return "partial";
+	}
+	if (
+		status === "VALID" ||
+		status === "SUPPORTED" ||
+		status === "SUPPORTS" ||
+		status === "TRUE"
+	) {
+		return "valid";
+	}
+	return "unknown";
+}
+
 function subclaimUnderline(statusRaw: unknown): string {
-	const status = String(statusRaw || "").toUpperCase();
-	if (status.includes("VALID") || status.includes("SUPPORTED")) {
-		return "decoration-emerald-300/90";
-	}
-	if (status.includes("INVALID") || status.includes("REFUTED")) {
-		return "decoration-rose-300/90";
-	}
-	if (status.includes("PARTIAL") || status.includes("MIXED")) {
-		return "decoration-amber-300/90";
-	}
-	return "decoration-cyan-300/90";
+	const category = normalizeSubclaimStatus(statusRaw);
+	if (category === "valid") return "decoration-emerald-300/90";
+	if (category === "invalid") return "decoration-rose-300/90";
+	if (category === "partial") return "decoration-amber-300/90";
+	return "decoration-sky-300/90";
 }
 
 function subclaimStatusBadge(statusRaw: unknown): string {
-	const status = String(statusRaw || "").toUpperCase();
-	if (status.includes("VALID") || status.includes("SUPPORTED")) {
+	const category = normalizeSubclaimStatus(statusRaw);
+	if (category === "valid") {
 		return "bg-emerald-500/20 border-emerald-300/50 text-emerald-100";
 	}
-	if (status.includes("INVALID") || status.includes("REFUTED")) {
+	if (category === "invalid") {
 		return "bg-rose-500/20 border-rose-300/50 text-rose-100";
 	}
-	if (status.includes("PARTIAL") || status.includes("MIXED")) {
+	if (category === "partial") {
 		return "bg-amber-500/20 border-amber-300/50 text-amber-100";
 	}
-	return "bg-cyan-500/20 border-cyan-300/50 text-cyan-100";
+	return "bg-sky-500/20 border-sky-300/50 text-sky-100";
 }
 
 function collectInsightLines(post: PostItem): string[] {
