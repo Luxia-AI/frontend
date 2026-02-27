@@ -324,6 +324,32 @@ export default function ClientPage() {
 		);
 	};
 
+	const downloadClaimJson = (post: PostItem) => {
+		if (!post.finalPayload) return;
+		const payload = {
+			claim_id: post.id,
+			claim_text: post.text,
+			received_at: post.createdAt,
+			result: post.finalPayload,
+		};
+		const blob = new Blob([JSON.stringify(payload, null, 2)], {
+			type: "application/json",
+		});
+		const url = URL.createObjectURL(blob);
+		const slug = post.text
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-+|-+$/g, "")
+			.slice(0, 40);
+		const anchor = document.createElement("a");
+		anchor.href = url;
+		anchor.download = `claim-${slug || post.id}.json`;
+		document.body.appendChild(anchor);
+		anchor.click();
+		anchor.remove();
+		URL.revokeObjectURL(url);
+	};
+
 	const renderClaimText = (post: PostItem): ReactNode => {
 		const breakdownRaw = post.finalPayload?.claim_breakdown;
 		if (!Array.isArray(breakdownRaw) || breakdownRaw.length === 0) {
@@ -1036,25 +1062,37 @@ export default function ClientPage() {
 													""
 											)}
 										</p>
-										{Array.isArray(
-											post.finalPayload.evidence
-										) &&
-										post.finalPayload.evidence.length >
-											0 ? (
+										<div className="mt-3 flex flex-wrap gap-2">
+											{Array.isArray(
+												post.finalPayload.evidence
+											) &&
+											post.finalPayload.evidence.length >
+												0 ? (
+												<button
+													className="surface-btn secondary text-xs"
+													onClick={() =>
+														setEvidencePostId(
+															post.id
+														)
+													}
+												>
+													View Evidence (
+													{
+														post.finalPayload
+															.evidence.length
+													}
+													)
+												</button>
+											) : null}
 											<button
-												className="surface-btn secondary mt-3 text-xs"
+												className="surface-btn secondary text-xs"
 												onClick={() =>
-													setEvidencePostId(post.id)
+													downloadClaimJson(post)
 												}
 											>
-												View Evidence (
-												{
-													post.finalPayload.evidence
-														.length
-												}
-												)
+												Download JSON
 											</button>
-										) : null}
+										</div>
 									</div>
 								</details>
 							) : null}
