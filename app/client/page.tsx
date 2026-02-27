@@ -1044,15 +1044,6 @@ export default function ClientPage() {
 													)}
 												</span>
 											</p>
-											<p>
-												job_id:{" "}
-												<span className="font-semibold">
-													{String(
-														post.finalPayload
-															.job_id ?? "N/A"
-													)}
-												</span>
-											</p>
 										</div>
 										<p className="mt-2 text-[var(--ink-1)]">
 											{String(
