@@ -20,6 +20,7 @@ type PostItem = {
 
 type ClaimBreakdownItem = {
 	claim_segment?: unknown;
+	exact_claim_segment?: unknown;
 	status?: unknown;
 	supporting_fact?: unknown;
 	source_url?: unknown;
@@ -366,7 +367,7 @@ export default function ClientPage() {
 		}> = [];
 
 		for (const rawItem of breakdownRaw as ClaimBreakdownItem[]) {
-			const segment = String(rawItem.claim_segment ?? "").trim();
+			const segment = String(rawItem.exact_claim_segment ?? "").trim();
 			if (!segment) continue;
 			const start = textLower.indexOf(segment.toLowerCase());
 			if (start < 0) continue;
