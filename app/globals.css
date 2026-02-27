@@ -212,10 +212,17 @@ body {
 	overflow: hidden;
 }
 
+.details-panel {
+	padding: 0.5rem 0.65rem;
+}
+
 .details-smooth > summary {
 	list-style: none;
 	position: relative;
 	padding-right: 1.1rem;
+	min-height: 1.35rem;
+	display: flex;
+	align-items: center;
 }
 
 .details-smooth > summary::-webkit-details-marker {
@@ -240,25 +247,35 @@ body {
 }
 
 .insight-rotor {
+	position: relative;
 	display: block;
-	min-height: 1.95rem;
-	border-radius: 0.7rem;
-	border: 1px solid rgba(248, 251, 255, 0.2);
-	background: linear-gradient(
-		180deg,
-		rgba(8, 20, 38, 0.78),
-		rgba(8, 20, 38, 0.5)
-	);
-	padding: 0.45rem 0.65rem;
+	min-height: 1.25rem;
+	border: 0;
+	background: none;
+	padding: 0;
 	overflow: hidden;
 	perspective: 580px;
+	box-shadow: none;
+	transition: transform var(--dur-fast) var(--ease-standard);
+	font-style: italic;
+	opacity: 0.7;
+	text-align: center;
+}
+
+.insight-rotor:hover,
+.insight-rotor:focus-visible {
+	box-shadow: none;
+	transform: none;
 }
 
 .insight-rotor-line {
+	position: relative;
+	z-index: 1;
 	margin: 0;
 	font-size: 0.72rem;
 	line-height: 1.25rem;
-	color: var(--ink-1);
+	color: #e1ecff;
+	text-shadow: 0 1px 8px rgba(0, 0, 0, 0.32);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;

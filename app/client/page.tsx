@@ -188,17 +188,22 @@ function collectInsightLines(post: PostItem): string[] {
 function RotatingInsightBar({ lines }: RotatingInsightBarProps) {
 	const [index, setIndex] = useState(0);
 	const [phase, setPhase] = useState<"idle" | "out" | "in">("idle");
+	const pausedRef = useRef(false);
 
 	useEffect(() => {
 		if (lines.length <= 1) return;
 		const displayMs = 4200;
 		const turnMs = 360;
 		const timer = window.setInterval(() => {
+			if (pausedRef.current) return;
 			setPhase("out");
 			window.setTimeout(() => {
+				if (pausedRef.current) return;
 				setIndex((prev) => (prev + 1) % lines.length);
 				setPhase("in");
-				window.setTimeout(() => setPhase("idle"), turnMs);
+				window.setTimeout(() => {
+					if (!pausedRef.current) setPhase("idle");
+				}, turnMs);
 			}, turnMs);
 		}, displayMs);
 		return () => window.clearInterval(timer);
@@ -209,7 +214,23 @@ function RotatingInsightBar({ lines }: RotatingInsightBarProps) {
 	const safePhase = lines.length <= 1 ? "idle" : phase;
 
 	return (
-		<div className="insight-rotor">
+		<div
+			className="insight-rotor"
+			onMouseEnter={() => {
+				pausedRef.current = true;
+			}}
+			onMouseLeave={() => {
+				pausedRef.current = false;
+			}}
+			onFocus={() => {
+				pausedRef.current = true;
+			}}
+			onBlur={() => {
+				pausedRef.current = false;
+			}}
+			tabIndex={0}
+			aria-label="Rotating insights"
+		>
 			<p className={`insight-rotor-line insight-rotor-line-${safePhase}`}>
 				{lines[safeIndex]}
 			</p>
@@ -937,7 +958,7 @@ export default function ClientPage() {
 									{post.note}
 								</p>
 							) : null}
-							<details className="details-smooth mt-3 rounded-lg border border-white/15 bg-black/20 p-2">
+							<details className="details-panel details-smooth mt-3 rounded-lg border border-white/15 bg-transparent">
 								<summary className="cursor-pointer text-xs font-semibold text-[var(--ink-1)]">
 									Job Logs ({post.logs.length})
 								</summary>
@@ -954,7 +975,7 @@ export default function ClientPage() {
 							</details>
 							{post.status === "completed" &&
 							post.finalPayload ? (
-								<details className="details-smooth mt-3 rounded-lg border border-white/15 bg-black/25 p-3 text-xs">
+								<details className="details-panel details-smooth mt-3 rounded-lg border border-white/15 bg-transparent text-xs">
 									<summary className="cursor-pointer font-semibold text-[var(--ink-1)]">
 										Final RAG Output
 									</summary>
