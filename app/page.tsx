@@ -3,68 +3,45 @@ import Link from "next/link";
 export default function Home() {
 	return (
 		<div className="aurora-shell min-h-screen px-6 py-10 md:px-10">
-			<div className="mx-auto max-w-6xl space-y-8">
-				<header className="fade-up glass-card-strong p-7 md:p-10">
-					<p className="status-pill w-fit">Luxia Control Surface</p>
-					<h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-6xl">
-						Sleek realtime operations for modern truth pipelines.
+			<div className="mx-auto max-w-5xl space-y-6">
+				<header className="glass-card-strong p-8 md:p-10">
+					<p className="status-pill w-fit">Luxia Workflow</p>
+					<h1 className="mt-3 text-4xl font-semibold">
+						Choose Workspace
 					</h1>
-					<p className="mt-4 max-w-3xl text-sm text-[var(--ink-1)] md:text-base">
-						Monitor platform health, approve onboarding, and run
-						multi-client live claim simulations from one polished
-						workflow.
+					<p className="mt-2 text-sm text-[var(--ink-1)]">
+						Use Admin to approve new room requests and monitor
+						client presence. Use Client to register a room and post
+						after approval.
 					</p>
 				</header>
-
-				<section className="grid gap-5 md:grid-cols-2">
+				<section className="grid gap-4 md:grid-cols-2">
 					<Link
 						href="/admin"
-						className="glass-card fade-up p-6 md:p-8"
+						className="glass-card p-6 transition hover:bg-white/12"
 					>
-						<p className="status-pill w-fit">Live Monitoring</p>
+						<p className="status-pill w-fit">Operations</p>
 						<h2 className="mt-3 text-2xl font-semibold">
-							Admin Console
+							Admin Page
 						</h2>
 						<p className="mt-2 text-sm text-[var(--ink-1)]">
-							Auto-updating overview, pending registrations, and
-							audit activity without manual refresh.
-						</p>
-						<p className="mt-6 text-sm text-[var(--accent-a)]">
-							Open admin workspace
+							Approve pending rooms and monitor active client
+							connections.
 						</p>
 					</Link>
-
 					<Link
 						href="/client"
-						className="glass-card fade-up p-6 md:p-8"
+						className="glass-card p-6 transition hover:bg-white/12"
 					>
-						<p className="status-pill w-fit">Realtime Sessions</p>
+						<p className="status-pill w-fit">Onboarding</p>
 						<h2 className="mt-3 text-2xl font-semibold">
-							Client Lab
+							Client Page
 						</h2>
 						<p className="mt-2 text-sm text-[var(--ink-1)]">
-							Manage multiple real client identities, join rooms,
-							send claims, and track isolated event streams.
-						</p>
-						<p className="mt-6 text-sm text-[var(--accent-b)]">
-							Open client workspace
+							Register a room first, wait for admin approval, then
+							connect and post.
 						</p>
 					</Link>
-				</section>
-
-				<section className="glass-card fade-up p-6 md:p-8">
-					<h3 className="text-lg font-semibold">Live Entry Points</h3>
-					<div className="mt-4 grid gap-3 text-sm text-[var(--ink-1)] md:grid-cols-3">
-						<div className="rounded-xl border border-white/20 bg-white/8 p-3">
-							Platform governance
-						</div>
-						<div className="rounded-xl border border-white/20 bg-white/8 p-3">
-							Client onboarding + approvals
-						</div>
-						<div className="rounded-xl border border-white/20 bg-white/8 p-3">
-							Realtime claim streaming
-						</div>
-					</div>
 				</section>
 			</div>
 		</div>

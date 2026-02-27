@@ -195,6 +195,94 @@ body {
 	animation: fade-up var(--dur-slow) var(--ease-standard) both;
 }
 
+.post-card-motion {
+	transition:
+		transform var(--dur-slow) var(--ease-standard),
+		box-shadow var(--dur-slow) var(--ease-standard),
+		border-color var(--dur-fast) var(--ease-standard);
+}
+
+.post-card-motion:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 18px 48px rgba(2, 8, 20, 0.45);
+	border-color: rgba(68, 226, 255, 0.35);
+}
+
+.details-smooth {
+	overflow: hidden;
+}
+
+.details-smooth > summary {
+	list-style: none;
+	position: relative;
+	padding-right: 1.1rem;
+}
+
+.details-smooth > summary::-webkit-details-marker {
+	display: none;
+}
+
+.details-smooth > summary::after {
+	content: "▾";
+	position: absolute;
+	right: 0;
+	top: 0;
+	opacity: 0.8;
+	transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.details-smooth[open] > summary::after {
+	transform: rotate(180deg);
+}
+
+.details-content {
+	animation: fade-up 220ms var(--ease-standard) both;
+}
+
+.insight-rotor {
+	display: block;
+	min-height: 1.95rem;
+	border-radius: 0.7rem;
+	border: 1px solid rgba(248, 251, 255, 0.2);
+	background: linear-gradient(
+		180deg,
+		rgba(8, 20, 38, 0.78),
+		rgba(8, 20, 38, 0.5)
+	);
+	padding: 0.45rem 0.65rem;
+	overflow: hidden;
+	perspective: 580px;
+}
+
+.insight-rotor-line {
+	margin: 0;
+	font-size: 0.72rem;
+	line-height: 1.25rem;
+	color: var(--ink-1);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	transform-origin: center center;
+	transition:
+		transform 360ms var(--ease-standard),
+		opacity 360ms var(--ease-standard);
+}
+
+.insight-rotor-line-idle {
+	transform: rotateX(0deg) translateY(0);
+	opacity: 1;
+}
+
+.insight-rotor-line-out {
+	transform: rotateX(70deg) translateY(-8px);
+	opacity: 0;
+}
+
+.insight-rotor-line-in {
+	transform: rotateX(-70deg) translateY(8px);
+	opacity: 0;
+}
+
 @keyframes fade-up {
 	from {
 		opacity: 0;
