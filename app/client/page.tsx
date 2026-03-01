@@ -121,6 +121,40 @@ function verdictBadgeClasses(verdictRaw: unknown): string {
 	return "bg-cyan-500/20 border-cyan-300/50 text-cyan-100";
 }
 
+function effectiveVerdict(
+	payload: Record<string, unknown> | undefined
+): string {
+	if (!payload) return "";
+	const shown = String(payload.display_verdict ?? "").trim();
+	if (shown) return shown;
+	return String(payload.verdict ?? "").trim();
+}
+
+function trustGateNote(payload: Record<string, unknown> | undefined): string {
+	if (!payload) return "";
+	const rawVerdict = String(payload.verdict ?? "")
+		.trim()
+		.toUpperCase();
+	const shownVerdict = String(payload.display_verdict ?? "")
+		.trim()
+		.toUpperCase();
+	const trustMet = payload.trust_threshold_met;
+	if (
+		rawVerdict === "UNVERIFIABLE" &&
+		trustMet === false &&
+		(shownVerdict || shownVerdict === "MOSTLY_FALSE")
+	) {
+		const reason = String(
+			(payload.trust_snapshot_v2 as Record<string, unknown> | undefined)
+				?.sufficiency_reason ?? ""
+		).trim();
+		return reason
+			? `Trust gate active (${reason}): showing ${shownVerdict || "banded verdict"} instead of hard FALSE.`
+			: "Trust gate active: showing banded verdict instead of hard FALSE.";
+	}
+	return "";
+}
+
 function formatPercent(value: unknown): string {
 	const numeric =
 		typeof value === "number"
@@ -455,7 +489,7 @@ export default function ClientPage() {
 					tabIndex={0}
 				>
 					{segmentText}
-					<span className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-80 max-w-[90vw] translate-y-1 scale-95 rounded-xl border border-white/20 bg-[#050e1be6] p-3 text-xs opacity-0 shadow-2xl backdrop-blur-xl transition-all duration-200 ease-[var(--ease-standard)] group-hover/subclaim:pointer-events-auto group-hover/subclaim:translate-y-0 group-hover/subclaim:scale-100 group-hover/subclaim:opacity-100 group-focus-within/subclaim:pointer-events-auto group-focus-within/subclaim:translate-y-0 group-focus-within/subclaim:scale-100 group-focus-within/subclaim:opacity-100">
+					<span className="pointer-events-none absolute left-0 top-full z-[120] mt-2 w-80 max-w-[90vw] translate-y-1 scale-95 rounded-xl border border-white/20 bg-[#050e1be6] p-3 text-xs opacity-0 shadow-2xl backdrop-blur-xl transition-all duration-200 ease-[var(--ease-standard)] group-hover/subclaim:pointer-events-auto group-hover/subclaim:translate-y-0 group-hover/subclaim:scale-100 group-hover/subclaim:opacity-100 group-focus-within/subclaim:pointer-events-auto group-focus-within/subclaim:translate-y-0 group-focus-within/subclaim:scale-100 group-focus-within/subclaim:opacity-100">
 						<span className="flex items-center gap-2">
 							<span
 								className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${subclaimStatusBadge(
@@ -634,7 +668,9 @@ export default function ClientPage() {
 			}
 			if (claimId) {
 				const status = String(data.status || "").toLowerCase();
-				const verdict = String(data.verdict ?? "").trim();
+				const verdict =
+					String(data.display_verdict ?? "").trim() ||
+					String(data.verdict ?? "").trim();
 				const completedWithoutVerdict =
 					status === "completed" && !verdict;
 				const stage = completedWithoutVerdict
@@ -686,7 +722,9 @@ export default function ClientPage() {
 			} else if (
 				String(data.status || "").toLowerCase() === "completed"
 			) {
-				const verdict = String(data.verdict ?? "").trim();
+				const verdict =
+					String(data.display_verdict ?? "").trim() ||
+					String(data.verdict ?? "").trim();
 				const completedWithoutVerdict = !verdict;
 				pushPost({
 					id: crypto.randomUUID(),
@@ -988,7 +1026,7 @@ export default function ClientPage() {
 					{timeline.map((post) => (
 						<article
 							key={post.id}
-							className="glass-card post-card-motion p-4"
+							className="glass-card post-card-motion relative z-0 p-4 hover:z-40 focus-within:z-40"
 						>
 							<div className="grid items-center gap-2 text-xs text-[var(--ink-2)] md:grid-cols-[auto_1fr_auto]">
 								<span>
@@ -1001,13 +1039,17 @@ export default function ClientPage() {
 								/>
 								<div className="flex items-center justify-end gap-2">
 									{post.status === "completed" &&
-									post.finalPayload?.verdict ? (
+									effectiveVerdict(post.finalPayload) ? (
 										<span
 											className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${verdictBadgeClasses(
-												post.finalPayload.verdict
+												effectiveVerdict(
+													post.finalPayload
+												)
 											)}`}
 										>
-											{String(post.finalPayload.verdict)}
+											{effectiveVerdict(
+												post.finalPayload
+											)}
 										</span>
 									) : null}
 									{post.stage ? (
@@ -1050,10 +1092,19 @@ export default function ClientPage() {
 												verdict:{" "}
 												<span
 													className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${verdictBadgeClasses(
-														post.finalPayload
-															.verdict
+														effectiveVerdict(
+															post.finalPayload
+														)
 													)}`}
 												>
+													{effectiveVerdict(
+														post.finalPayload
+													) || "N/A"}
+												</span>
+											</p>
+											<p>
+												raw verdict:{" "}
+												<span className="font-semibold">
 													{String(
 														post.finalPayload
 															.verdict ?? "N/A"
@@ -1083,6 +1134,13 @@ export default function ClientPage() {
 												</span>
 											</p>
 										</div>
+										{trustGateNote(post.finalPayload) ? (
+											<p className="mt-2 text-[11px] text-amber-100">
+												{trustGateNote(
+													post.finalPayload
+												)}
+											</p>
+										) : null}
 										<p className="mt-2 text-[var(--ink-1)]">
 											{String(
 												post.finalPayload
