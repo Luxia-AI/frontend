@@ -209,6 +209,72 @@ function formatPercent(value: unknown): string {
 	return `${Math.round(normalized * 10) / 10}%`;
 }
 
+function formatElapsedClock(secondsRaw: unknown): string {
+	const secondsNum =
+		typeof secondsRaw === "number"
+			? secondsRaw
+			: typeof secondsRaw === "string"
+				? Number.parseFloat(secondsRaw)
+				: Number.NaN;
+	if (!Number.isFinite(secondsNum) || secondsNum < 0) return "";
+	const total = Math.max(0, Math.round(secondsNum));
+	const minutes = Math.floor(total / 60);
+	const seconds = total % 60;
+	return `${minutes}m ${seconds}s`;
+}
+
+function postConsumedSeconds(post: PostItem): number | null {
+	const payload = post.finalPayload;
+	const elapsedDirect =
+		payload && typeof payload === "object"
+			? (payload.elapsed_seconds as unknown)
+			: undefined;
+	const directNum =
+		typeof elapsedDirect === "number"
+			? elapsedDirect
+			: typeof elapsedDirect === "string"
+				? Number.parseFloat(elapsedDirect)
+				: Number.NaN;
+	if (Number.isFinite(directNum) && directNum >= 0) return directNum;
+
+	if (payload && typeof payload === "object") {
+		const stageEvents = Array.isArray(payload.stage_events)
+			? (payload.stage_events as Array<Record<string, unknown>>)
+			: [];
+		let startedAt: number | null = null;
+		let completedAt: number | null = null;
+		for (const ev of stageEvents) {
+			const stage = String(ev.stage ?? "")
+				.trim()
+				.toLowerCase();
+			const ts = String(ev.timestamp ?? "").trim();
+			if (!ts) continue;
+			const parsed = Date.parse(ts);
+			if (!Number.isFinite(parsed)) continue;
+			if (stage === "started" && (startedAt === null || parsed < startedAt)) {
+				startedAt = parsed;
+			}
+			if (stage === "completed" && (completedAt === null || parsed > completedAt)) {
+				completedAt = parsed;
+			}
+		}
+		if (startedAt !== null && completedAt !== null && completedAt >= startedAt) {
+			return (completedAt - startedAt) / 1000;
+		}
+
+		const finalTs = String(payload.timestamp ?? "").trim();
+		if (finalTs) {
+			const created = Date.parse(post.createdAt);
+			const finished = Date.parse(finalTs);
+			if (Number.isFinite(created) && Number.isFinite(finished) && finished >= created) {
+				return (finished - created) / 1000;
+			}
+		}
+	}
+
+	return null;
+}
+
 function normalizeSubclaimStatus(
 	statusRaw: unknown
 ): "valid" | "invalid" | "partial" | "unknown" {
@@ -1099,6 +1165,14 @@ export default function ClientPage() {
 									{post.stage ? (
 										<span className="status-pill">
 											{post.stage}
+										</span>
+									) : null}
+									{postConsumedSeconds(post) !== null ? (
+										<span className="status-pill">
+											time:{" "}
+											{formatElapsedClock(
+												postConsumedSeconds(post)
+											)}
 										</span>
 									) : null}
 								</div>
