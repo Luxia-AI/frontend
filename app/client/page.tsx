@@ -108,26 +108,68 @@ function labelForStage(stageRaw: unknown): string {
 }
 
 function verdictBadgeClasses(verdictRaw: unknown): string {
-	const verdict = String(verdictRaw || "").toUpperCase();
-	if (verdict.includes("TRUE") || verdict.includes("VALID")) {
+	const verdict = String(verdictRaw || "")
+		.trim()
+		.toUpperCase();
+	if (verdict === "TRUE") {
 		return "bg-emerald-500/20 border-emerald-300/50 text-emerald-100";
 	}
-	if (verdict.includes("FALSE") || verdict.includes("INVALID")) {
+	if (verdict === "FALSE") {
 		return "bg-rose-500/20 border-rose-300/50 text-rose-100";
 	}
-	if (verdict.includes("PARTIALLY") || verdict.includes("MIXED")) {
-		return "bg-amber-500/20 border-amber-300/50 text-amber-100";
+	if (verdict === "UNVERIFIABLE") {
+		return "bg-cyan-500/20 border-cyan-300/50 text-cyan-100";
 	}
-	return "bg-cyan-500/20 border-cyan-300/50 text-cyan-100";
+	return "bg-slate-500/20 border-slate-300/50 text-slate-100";
 }
 
-function effectiveVerdict(
-	payload: Record<string, unknown> | undefined
-): string {
+function canonicalVerdictLabel(value: unknown): string {
+	const raw = String(value ?? "")
+		.trim()
+		.toUpperCase();
+	if (!raw) return "";
+	if (
+		raw === "TRUE" ||
+		raw === "VALID" ||
+		raw === "LIKELY_TRUE" ||
+		raw === "MOSTLY_TRUE" ||
+		raw === "PARTIALLY_TRUE"
+	) {
+		return "TRUE";
+	}
+	if (
+		raw === "FALSE" ||
+		raw === "INVALID" ||
+		raw === "LIKELY_FALSE" ||
+		raw === "MOSTLY_FALSE"
+	) {
+		return "FALSE";
+	}
+	if (
+		raw === "UNVERIFIABLE" ||
+		raw === "UNKNOWN" ||
+		raw === "MIXED_OR_UNCLEAR"
+	) {
+		return "UNVERIFIABLE";
+	}
+	return "";
+}
+
+function coreVerdict(payload: Record<string, unknown> | undefined): string {
 	if (!payload) return "";
-	const shown = String(payload.display_verdict ?? "").trim();
-	if (shown) return shown;
-	return String(payload.verdict ?? "").trim();
+	const canonical = canonicalVerdictLabel(payload.verdict);
+	if (canonical) return canonical;
+	const fallback = canonicalVerdictLabel(payload.display_verdict);
+	if (fallback) return fallback;
+	return "";
+}
+
+function verdictBand(payload: Record<string, unknown> | undefined): string {
+	if (!payload) return "";
+	const band = String(payload.verdict_band ?? "")
+		.trim()
+		.toUpperCase();
+	return band;
 }
 
 function trustGateNote(payload: Record<string, unknown> | undefined): string {
@@ -140,17 +182,17 @@ function trustGateNote(payload: Record<string, unknown> | undefined): string {
 		.toUpperCase();
 	const trustMet = payload.trust_threshold_met;
 	if (
-		rawVerdict === "UNVERIFIABLE" &&
+		rawVerdict !== "UNVERIFIABLE" &&
 		trustMet === false &&
-		(shownVerdict || shownVerdict === "MOSTLY_FALSE")
+		canonicalVerdictLabel(shownVerdict) === "UNVERIFIABLE"
 	) {
 		const reason = String(
 			(payload.trust_snapshot_v2 as Record<string, unknown> | undefined)
 				?.sufficiency_reason ?? ""
 		).trim();
 		return reason
-			? `Trust gate active (${reason}): showing ${shownVerdict || "banded verdict"} instead of hard FALSE.`
-			: "Trust gate active: showing banded verdict instead of hard FALSE.";
+			? `Trust gate active (${reason}): downgraded final class to UNVERIFIABLE.`
+			: "Trust gate active: downgraded final class to UNVERIFIABLE.";
 	}
 	return "";
 }
@@ -669,8 +711,8 @@ export default function ClientPage() {
 			if (claimId) {
 				const status = String(data.status || "").toLowerCase();
 				const verdict =
-					String(data.display_verdict ?? "").trim() ||
-					String(data.verdict ?? "").trim();
+					canonicalVerdictLabel(data.verdict) ||
+					canonicalVerdictLabel(data.display_verdict);
 				const completedWithoutVerdict =
 					status === "completed" && !verdict;
 				const stage = completedWithoutVerdict
@@ -723,8 +765,8 @@ export default function ClientPage() {
 				String(data.status || "").toLowerCase() === "completed"
 			) {
 				const verdict =
-					String(data.display_verdict ?? "").trim() ||
-					String(data.verdict ?? "").trim();
+					canonicalVerdictLabel(data.verdict) ||
+					canonicalVerdictLabel(data.display_verdict);
 				const completedWithoutVerdict = !verdict;
 				pushPost({
 					id: crypto.randomUUID(),
@@ -1039,17 +1081,19 @@ export default function ClientPage() {
 								/>
 								<div className="flex items-center justify-end gap-2">
 									{post.status === "completed" &&
-									effectiveVerdict(post.finalPayload) ? (
+									coreVerdict(post.finalPayload) ? (
 										<span
 											className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${verdictBadgeClasses(
-												effectiveVerdict(
-													post.finalPayload
-												)
+												coreVerdict(post.finalPayload)
 											)}`}
 										>
-											{effectiveVerdict(
-												post.finalPayload
-											)}
+											{coreVerdict(post.finalPayload)}
+										</span>
+									) : null}
+									{post.status === "completed" &&
+									verdictBand(post.finalPayload) ? (
+										<span className="inline-flex rounded-full border border-white/25 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/90">
+											{verdictBand(post.finalPayload)}
 										</span>
 									) : null}
 									{post.stage ? (
@@ -1089,25 +1133,34 @@ export default function ClientPage() {
 									<div className="details-content">
 										<div className="mt-2 grid gap-1 md:grid-cols-2">
 											<p>
-												verdict:{" "}
+												verdict (core):{" "}
 												<span
 													className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${verdictBadgeClasses(
-														effectiveVerdict(
+														coreVerdict(
 															post.finalPayload
 														)
 													)}`}
 												>
-													{effectiveVerdict(
+													{coreVerdict(
 														post.finalPayload
 													) || "N/A"}
 												</span>
 											</p>
 											<p>
-												raw verdict:{" "}
+												verdict band:{" "}
+												<span className="font-semibold">
+													{verdictBand(
+														post.finalPayload
+													) || "N/A"}
+												</span>
+											</p>
+											<p>
+												raw display verdict:{" "}
 												<span className="font-semibold">
 													{String(
 														post.finalPayload
-															.verdict ?? "N/A"
+															.display_verdict ??
+															"N/A"
 													)}
 												</span>
 											</p>
