@@ -1169,7 +1169,6 @@ export default function ClientPage() {
 									) : null}
 									{postConsumedSeconds(post) !== null ? (
 										<span className="status-pill">
-											time:{" "}
 											{formatElapsedClock(
 												postConsumedSeconds(post)
 											)}
